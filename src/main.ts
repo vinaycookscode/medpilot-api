@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression = require('compression');
+import cors = require('cors');
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -15,18 +16,22 @@ async function bootstrap() {
   app.use(helmet());
   app.use(compression());
 
-  const rawOrigins = config.get<string>('CORS_ORIGIN', '*');
-  const allowAll = rawOrigins.trim() === '*';
-  const allowedOrigins = allowAll ? [] : rawOrigins.split(',').map(o => o.trim());
-  app.enableCors({
-    origin: allowAll
-      ? true
-      : (origin, cb) => {
-          if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-          cb(null, false);
-        },
-    credentials: true,
-  });
+  const extraOrigins = config.get<string>('CORS_ORIGIN', '');
+  const allowedOrigins = [
+    'https://www.gotwell.org',
+    'https://gotwell.org',
+    'http://localhost:4200',
+    ...extraOrigins.split(',').map(o => o.trim()).filter(Boolean),
+  ];
+  app.use(
+    cors({
+      origin: (origin, cb) => {
+        if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+        cb(null, false);
+      },
+      credentials: true,
+    }),
+  );
 
   app.setGlobalPrefix(config.get('API_PREFIX', 'api/v1'), {
     exclude: ['health'],
