@@ -15,7 +15,7 @@ async function bootstrap() {
   app.use(helmet());
   app.use(compression());
 
-  const rawOrigins = config.get<string>('CORS_ORIGIN', 'http://localhost:4200');
+  const rawOrigins = config.get<string>('CORS_ORIGIN', '*');
   const allowAll = rawOrigins.trim() === '*';
   const allowedOrigins = allowAll ? [] : rawOrigins.split(',').map(o => o.trim());
   app.enableCors({
