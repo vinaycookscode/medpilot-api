@@ -15,8 +15,14 @@ async function bootstrap() {
   app.use(helmet());
   app.use(compression());
 
+  const rawOrigins = config.get<string>('CORS_ORIGIN', 'http://localhost:4200');
+  const allowedOrigins = rawOrigins.split(',').map(o => o.trim());
   app.enableCors({
-    origin: config.get('CORS_ORIGIN', 'http://localhost:4200'),
+    origin: (origin, cb) => {
+      // allow server-to-server (no origin) and any listed origin
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      cb(new Error(`CORS: ${origin} not allowed`));
+    },
     credentials: true,
   });
 
