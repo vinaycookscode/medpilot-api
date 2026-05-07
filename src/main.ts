@@ -20,7 +20,9 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.setGlobalPrefix(config.get('API_PREFIX', 'api/v1'));
+  app.setGlobalPrefix(config.get('API_PREFIX', 'api/v1'), {
+    exclude: ['health'],
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
