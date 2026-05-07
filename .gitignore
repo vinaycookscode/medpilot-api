@@ -1,0 +1,31 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log
+
+# Build output
+dist/
+
+# Environment — never commit secrets
+.env
+.env.*
+!.env.example
+
+# TypeORM / DB migration artifacts
+*.js.map
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
