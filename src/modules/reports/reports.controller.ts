@@ -17,29 +17,29 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('revenue')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Revenue summary (admin only)' })
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Revenue summary' })
   getRevenueSummary(@CurrentUser() user: JwtPayload, @Query() query: ReportQueryDto) {
     return this.reportsService.getRevenueSummary(user.clinicId, query);
   }
 
   @Get('appointments')
-  @Roles(UserRole.ADMIN, UserRole.DOCTOR)
+  @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.RECEPTIONIST)
   @ApiOperation({ summary: 'Appointment statistics' })
   getAppointmentStats(@CurrentUser() user: JwtPayload, @Query() query: ReportQueryDto) {
     return this.reportsService.getAppointmentStats(user.clinicId, query);
   }
 
   @Get('patients')
-  @Roles(UserRole.ADMIN, UserRole.DOCTOR)
+  @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.RECEPTIONIST)
   @ApiOperation({ summary: 'Patient statistics' })
   getPatientStats(@CurrentUser() user: JwtPayload, @Query() query: ReportQueryDto) {
     return this.reportsService.getPatientStats(user.clinicId, query);
   }
 
   @Get('inventory')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Inventory statistics (admin only)' })
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Inventory statistics' })
   getInventoryStats(@CurrentUser() user: JwtPayload, @Query() query: ReportQueryDto) {
     return this.reportsService.getInventoryStats(user.clinicId, query);
   }

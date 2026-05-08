@@ -31,7 +31,7 @@ export class LabsController {
   constructor(private readonly labsService: LabsService) {}
 
   @Post('orders')
-  @Roles(UserRole.DOCTOR, UserRole.ADMIN)
+  @Roles(UserRole.DOCTOR, UserRole.ADMIN, UserRole.RECEPTIONIST)
   @ApiOperation({ summary: 'Create a new lab order' })
   async createOrder(
     @CurrentUser() user: JwtPayload,

@@ -58,8 +58,8 @@ export class InsuranceController {
   }
 
   @Get('claims/stats')
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get claim statistics (admin only)' })
+  @Roles(UserRole.ADMIN, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'Get claim statistics' })
   async getClaimStats(@CurrentUser() user: JwtPayload) {
     const data = await this.insuranceService.getClaimStats(user.clinicId);
     return { success: true, data };
