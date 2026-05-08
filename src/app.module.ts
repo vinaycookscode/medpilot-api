@@ -13,6 +13,7 @@ import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { PrescriptionsModule } from './modules/prescriptions/prescriptions.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     PrescriptionsModule,
     BillingModule,
     DashboardModule,
+    InventoryModule,
   ],
   controllers: [AppController],
   providers: [
