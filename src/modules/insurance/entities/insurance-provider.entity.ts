@@ -13,10 +13,10 @@ export class InsuranceProvider extends BaseEntity {
   @Column({ length: 50 })
   code: string;
 
-  @Column({ nullable: true, length: 255 })
+  @Column({ type: 'varchar', nullable: true, length: 255 })
   contactEmail: string | null;
 
-  @Column({ nullable: true, length: 30 })
+  @Column({ type: 'varchar', nullable: true, length: 30 })
   contactPhone: string | null;
 
   @Column({ type: 'text', nullable: true })

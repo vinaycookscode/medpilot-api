@@ -24,10 +24,10 @@ export class LabOrderItem {
   @Column({ type: 'text', nullable: true })
   result: string | null;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   normalRange: string | null;
 
-  @Column({ length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   unit: string | null;
 
   @Column({ type: 'boolean', nullable: true })

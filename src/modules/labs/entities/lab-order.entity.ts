@@ -27,7 +27,7 @@ export class LabOrder extends BaseEntity {
   @JoinColumn({ name: 'patientId' })
   patient: Patient;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   appointmentId: string | null;
 
   @ManyToOne(() => Appointment, { nullable: true })

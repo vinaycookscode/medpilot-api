@@ -29,7 +29,7 @@ export class InsuranceClaim extends BaseEntity {
   @JoinColumn({ name: 'patientId' })
   patient: Patient;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   invoiceId: string | null;
 
   @ManyToOne(() => Invoice, { nullable: true })

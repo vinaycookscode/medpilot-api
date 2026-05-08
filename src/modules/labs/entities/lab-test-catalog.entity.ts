@@ -23,10 +23,10 @@ export class LabTestCatalog extends BaseEntity {
   @Column({ type: 'enum', enum: LabTestCategory, default: LabTestCategory.OTHER })
   category: LabTestCategory;
 
-  @Column({ length: 50, nullable: true })
+  @Column({ type: 'varchar', length: 50, nullable: true })
   unit: string | null;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   normalRange: string | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
