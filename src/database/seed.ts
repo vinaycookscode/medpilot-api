@@ -33,6 +33,7 @@ async function seed() {
   const invoiceRepo     = dataSource.getRepository('invoices');
   const invoiceItemRepo = dataSource.getRepository('invoice_items');
   const paymentRepo     = dataSource.getRepository('payments');
+  const labCatalogRepo  = dataSource.getRepository('lab_test_catalog');
 
   // ── Clinic ──
   let clinic = await clinicRepo.findOne({ where: { slug: 'demo-clinic' } });
@@ -581,6 +582,46 @@ async function seed() {
     console.log(`✅ Seeded ${invoiceSeededCount} invoices`);
   } else {
     console.log(`ℹ️  Enough invoices exist (${invoiceCount}), skipping`);
+  }
+
+  // ── Lab Test Catalog ──
+  const labCatalogCount = await labCatalogRepo.count({ where: { clinicId: clinic.id } });
+  if (labCatalogCount === 0) {
+    const labTests = [
+      // Haematology
+      { name: 'Complete Blood Count (CBC)',        category: 'haematology',  unit: 'cells/μL',  normalRange: 'WBC: 4-11K, RBC: 4.5-5.5M, Hb: 12-17g/dL', price: 350 },
+      { name: 'Erythrocyte Sedimentation Rate',    category: 'haematology',  unit: 'mm/hr',     normalRange: 'Male: 0-15, Female: 0-20',                    price: 150 },
+      { name: 'Peripheral Blood Smear',            category: 'haematology',  unit: null,        normalRange: 'Normal morphology',                           price: 200 },
+      { name: 'Haemoglobin A1c (HbA1c)',           category: 'haematology',  unit: '%',         normalRange: '<5.7% Normal, 5.7-6.4% Pre-diabetes',        price: 500 },
+      // Biochemistry
+      { name: 'Fasting Blood Glucose (FBS)',       category: 'biochemistry', unit: 'mg/dL',     normalRange: '70-100',                                      price: 120 },
+      { name: 'Post-Prandial Blood Sugar (PPBS)',  category: 'biochemistry', unit: 'mg/dL',     normalRange: '<140',                                        price: 120 },
+      { name: 'Liver Function Test (LFT)',         category: 'biochemistry', unit: 'U/L',       normalRange: 'ALT: 7-56, AST: 10-40, ALP: 44-147',         price: 600 },
+      { name: 'Kidney Function Test (KFT)',        category: 'biochemistry', unit: 'mg/dL',     normalRange: 'Creatinine: 0.6-1.2, Urea: 7-20',            price: 600 },
+      { name: 'Lipid Profile',                     category: 'biochemistry', unit: 'mg/dL',     normalRange: 'Total Chol <200, LDL <100, HDL >40',         price: 700 },
+      { name: 'Thyroid Function Test (TFT)',       category: 'biochemistry', unit: 'mIU/L',     normalRange: 'TSH: 0.4-4.0',                               price: 800 },
+      { name: 'Serum Electrolytes',                category: 'biochemistry', unit: 'mEq/L',     normalRange: 'Na: 136-145, K: 3.5-5.1',                    price: 400 },
+      { name: 'Serum Ferritin',                    category: 'biochemistry', unit: 'ng/mL',     normalRange: 'Male: 24-336, Female: 11-307',               price: 600 },
+      { name: 'Vitamin D (25-OH)',                 category: 'biochemistry', unit: 'ng/mL',     normalRange: '30-100',                                      price: 900 },
+      { name: 'Vitamin B12',                       category: 'biochemistry', unit: 'pg/mL',     normalRange: '200-900',                                     price: 700 },
+      // Microbiology
+      { name: 'Urine Routine & Microscopy',        category: 'microbiology', unit: null,        normalRange: 'No pus cells, No RBC, No casts',             price: 150 },
+      { name: 'Urine Culture & Sensitivity',       category: 'microbiology', unit: null,        normalRange: 'No growth',                                   price: 500 },
+      { name: 'Blood Culture & Sensitivity',       category: 'microbiology', unit: null,        normalRange: 'No growth',                                   price: 800 },
+      { name: 'Stool Routine & Microscopy',        category: 'microbiology', unit: null,        normalRange: 'No ova/cysts, No occult blood',              price: 200 },
+      // Radiology
+      { name: 'Chest X-Ray (PA View)',             category: 'radiology',    unit: null,        normalRange: 'No active lesion',                           price: 300 },
+      { name: 'ECG (12-Lead)',                     category: 'cardiology',   unit: null,        normalRange: 'Normal sinus rhythm',                        price: 250 },
+      { name: '2D Echocardiography',               category: 'cardiology',   unit: null,        normalRange: 'Normal LV function, EF >55%',                price: 1800 },
+      // Pathology
+      { name: 'COVID-19 RT-PCR',                   category: 'microbiology', unit: null,        normalRange: 'Not Detected',                               price: 500 },
+      { name: 'Dengue NS1 Antigen',                category: 'microbiology', unit: null,        normalRange: 'Negative',                                   price: 600 },
+      { name: 'Malaria Antigen Test',              category: 'microbiology', unit: null,        normalRange: 'Negative',                                   price: 300 },
+    ];
+    await labCatalogRepo.save(labTests.map(t => ({ ...t, clinicId: clinic.id, isActive: true })));
+    console.log(`✅ Seeded ${labTests.length} lab catalog tests`);
+  } else {
+    console.log(`ℹ️  Lab catalog already seeded (${labCatalogCount} tests), skipping`);
   }
 
   console.log('\n🚀 Seed complete!');
