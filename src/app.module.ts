@@ -14,6 +14,12 @@ import { PrescriptionsModule } from './modules/prescriptions/prescriptions.modul
 import { BillingModule } from './modules/billing/billing.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
+import { StaffModule } from './modules/staff/staff.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { RolesGuard } from './common/guards/roles.guard';
+import { LabsModule } from './modules/labs/labs.module';
+import { InsuranceModule } from './modules/insurance/insurance.module';
 
 @Module({
   imports: [
@@ -80,12 +86,21 @@ import { InventoryModule } from './modules/inventory/inventory.module';
     BillingModule,
     DashboardModule,
     InventoryModule,
+    StaffModule,
+    NotificationsModule,
+    ReportsModule,
+    LabsModule,
+    InsuranceModule,
   ],
   controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })
