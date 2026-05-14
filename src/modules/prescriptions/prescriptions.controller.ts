@@ -38,7 +38,7 @@ export class PrescriptionsController {
   @ApiOperation({ summary: 'Get follow-up patients grouped by overdue / today / upcoming' })
   @ApiQuery({ name: 'days', required: false, description: 'Lookahead window in days (default 60)' })
   getFollowups(@CurrentUser() user: JwtPayload, @Query('days') days?: string) {
-    return this.prescriptionsService.getFollowups(user.clinicId, days ? Number(days) : 60);
+    return this.prescriptionsService.getFollowups(user.clinicId, user, days ? Number(days) : 60);
   }
 
   @Get('medicines/search')

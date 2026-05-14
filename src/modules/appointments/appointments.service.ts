@@ -78,14 +78,13 @@ export class AppointmentsService {
 
     qb.orderBy('a.appointmentDate', 'ASC').addOrderBy('a.startTime', 'ASC');
 
-    const total = await qb.getCount();
-    const data = await qb.skip(query.skip).take(query.limit).getMany();
+    const [data, total] = await qb.skip(query.skip).take(query.limit).getManyAndCount();
 
     return { data, meta: { total, page: query.page, limit: query.limit } };
   }
 
-  async findToday(clinicId: string, currentUser: JwtPayload) {
-    const today = new Date().toISOString().split('T')[0];
+  async findToday(clinicId: string, currentUser: JwtPayload, date?: string, page = 1, limit = 20) {
+    const today = date ?? new Date().toISOString().split('T')[0];
     const qb = this.appointmentsRepo
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.patient', 'patient')
@@ -98,10 +97,13 @@ export class AppointmentsService {
       qb.andWhere('a.doctorId = :doctorId', { doctorId: currentUser.sub });
     }
 
-    return qb.orderBy('a.tokenNumber', 'ASC').getMany();
+    qb.orderBy('a.tokenNumber', 'ASC');
+
+    const [data, total] = await qb.skip((page - 1) * limit).take(limit).getManyAndCount();
+    return { data, meta: { total, page, limit } };
   }
 
-  async findCalendar(clinicId: string, startDate: string, endDate: string, doctorId?: string) {
+  async findCalendar(clinicId: string, startDate: string, endDate: string, currentUser: JwtPayload, doctorId?: string) {
     const qb = this.appointmentsRepo
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.patient', 'patient')
@@ -110,7 +112,11 @@ export class AppointmentsService {
       .andWhere('a.appointmentDate BETWEEN :start AND :end', { start: startDate, end: endDate })
       .andWhere('a.deletedAt IS NULL');
 
-    if (doctorId) qb.andWhere('a.doctorId = :doctorId', { doctorId });
+    if (currentUser.role === UserRole.DOCTOR) {
+      qb.andWhere('a.doctorId = :doctorId', { doctorId: currentUser.sub });
+    } else if (doctorId) {
+      qb.andWhere('a.doctorId = :doctorId', { doctorId });
+    }
     return qb.orderBy('a.appointmentDate', 'ASC').addOrderBy('a.startTime', 'ASC').getMany();
   }
 

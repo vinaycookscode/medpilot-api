@@ -78,10 +78,14 @@ export class InsuranceService {
       qb.andWhere('c.createdAt <= :to', { to: query.to });
     }
 
-    qb.orderBy('c.createdAt', 'DESC');
+    const sortableColumns: Record<string, string> = {
+      createdAt: 'c.createdAt', claimAmount: 'c.claimAmount',
+      approvedAmount: 'c.approvedAmount', status: 'c.status', policyNumber: 'c.policyNumber',
+    };
+    const sortField = (query.sortBy && sortableColumns[query.sortBy]) ? sortableColumns[query.sortBy] : 'c.createdAt';
+    qb.orderBy(sortField, query.sortOrder === 'ASC' ? 'ASC' : 'DESC');
 
-    const total = await qb.getCount();
-    const data = await qb.skip(query.skip).take(query.limit).getMany();
+    const [data, total] = await qb.skip(query.skip).take(query.limit).getManyAndCount();
 
     return { data, meta: { total, page: query.page, limit: query.limit } };
   }

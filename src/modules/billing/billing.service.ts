@@ -64,8 +64,7 @@ export class BillingService {
     }
 
     qb.orderBy('inv.invoiceDate', 'DESC');
-    const total = await qb.getCount();
-    const data = await qb.skip(query.skip).take(query.limit).getMany();
+    const [data, total] = await qb.skip(query.skip).take(query.limit).getManyAndCount();
 
     return { data, meta: { total, page: query.page, limit: query.limit } };
   }

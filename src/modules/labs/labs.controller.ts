@@ -47,7 +47,7 @@ export class LabsController {
     @CurrentUser() user: JwtPayload,
     @Query() query: QueryLabsDto,
   ) {
-    const result = await this.labsService.findOrders(user.clinicId, query);
+    const result = await this.labsService.findOrders(user.clinicId, query, user);
     return { success: true, ...result };
   }
 
@@ -88,8 +88,7 @@ export class LabsController {
   @Get('catalog')
   @ApiOperation({ summary: 'Get active lab test catalog for dropdown' })
   async findCatalog(@CurrentUser() user: JwtPayload) {
-    const data = await this.labsService.findTestCatalog(user.clinicId);
-    return { success: true, data };
+    return this.labsService.findTestCatalog(user.clinicId);
   }
 
   @Post('catalog')

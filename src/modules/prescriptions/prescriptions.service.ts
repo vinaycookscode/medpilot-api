@@ -155,7 +155,7 @@ export class PrescriptionsService {
     return merged.slice(0, 15);
   }
 
-  async getFollowups(clinicId: string, days = 60): Promise<{
+  async getFollowups(clinicId: string, currentUser: JwtPayload, days = 60): Promise<{
     overdue: Prescription[];
     today: Prescription[];
     upcoming: Prescription[];
@@ -165,9 +165,10 @@ export class PrescriptionsService {
     futureDate.setDate(futureDate.getDate() + days);
     const futureDateStr = futureDate.toISOString().split('T')[0];
 
-    const base = {
+    const base: any = {
       clinicId,
       deletedAt: null as any,
+      ...(currentUser.role === UserRole.DOCTOR ? { doctorId: currentUser.sub } : {}),
     };
 
     const [overdueRaw, todayRaw, upcomingRaw] = await Promise.all([
