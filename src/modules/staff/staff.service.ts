@@ -42,7 +42,7 @@ export class StaffService {
       order: { firstName: 'ASC' },
       select: ['id', 'firstName', 'lastName', 'specialization', 'consultationFee', 'avatarUrl'],
     });
-    return { data };
+    return data;
   }
 
   async findOne(id: string, clinicId: string): Promise<User> {
@@ -78,8 +78,7 @@ export class StaffService {
       qb.where('l.userId = :userId', { userId: requesterId });
     }
 
-    const data = await qb.getMany();
-    return { data };
+    return qb.getMany();
   }
 
   async updateLeaveStatus(
