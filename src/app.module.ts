@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RedisModule } from '@nestjs-modules/ioredis';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -20,6 +21,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { RolesGuard } from './common/guards/roles.guard';
 import { LabsModule } from './modules/labs/labs.module';
 import { InsuranceModule } from './modules/insurance/insurance.module';
+import { AbdmModule } from './modules/abdm/abdm.module';
 
 @Module({
   imports: [
@@ -67,6 +69,17 @@ import { InsuranceModule } from './modules/insurance/insurance.module';
       },
     }),
 
+    RedisModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'single',
+        options: {
+          host: config.get<string>('REDIS_HOST', 'localhost'),
+          port: config.get<number>('REDIS_PORT', 6379),
+        },
+      }),
+    }),
+
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
@@ -91,6 +104,7 @@ import { InsuranceModule } from './modules/insurance/insurance.module';
     ReportsModule,
     LabsModule,
     InsuranceModule,
+    AbdmModule,
   ],
   controllers: [AppController],
   providers: [

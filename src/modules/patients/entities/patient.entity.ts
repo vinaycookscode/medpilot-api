@@ -118,6 +118,26 @@ export class Patient extends BaseEntity {
   @JoinColumn({ name: 'createdBy' })
   createdByUser: User;
 
+  // ─── ABHA / ABDM ──────────────────────────────────────────────────────────
+  @Column({ nullable: true, type: 'text' })
+  abhaNumber: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  abhaAddress: string | null;
+
+  @Column({ default: false })
+  abhaVerified: boolean;
+
+  @Column({ nullable: true, type: 'varchar', length: 30 })
+  abhaKycType: string | null;
+
+  @Column({ nullable: true, type: 'timestamptz' })
+  abhaLinkedAt: Date | null;
+
+  // Short-lived patient X-Token from ABDM (for card download) — never exposed in API responses
+  @Column({ nullable: true, type: 'text', select: false })
+  abhaXToken: string | null;
+
   get fullName(): string {
     return `${this.firstName} ${this.lastName}`;
   }
