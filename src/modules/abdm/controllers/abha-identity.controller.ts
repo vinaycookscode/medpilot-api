@@ -94,6 +94,17 @@ export class AbhaIdentityController {
     return this.abhaService.initiateVerification(dto, user.clinicId, user.sub);
   }
 
+  @Post('patients/:patientId/verify/initiate')
+  @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.RECEPTIONIST)
+  @ApiOperation({ summary: 'M2: Initiate ABHA verification linked to a patient — OTP confirm will auto-link' })
+  async initiateVerificationForPatient(
+    @Param('patientId') patientId: string,
+    @Body() dto: InitiateVerifyDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.abhaService.initiateVerification(dto, user.clinicId, user.sub, patientId);
+  }
+
   @Post('verify/confirm')
   @Roles(UserRole.ADMIN, UserRole.DOCTOR, UserRole.RECEPTIONIST)
   @HttpCode(HttpStatus.OK)

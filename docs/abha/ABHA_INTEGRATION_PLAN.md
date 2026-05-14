@@ -22,22 +22,32 @@ and optionally a **Health Information User (HIU)**. This means:
 
 ## Milestone Overview
 
-| # | Milestone | Description | Depends On |
-|---|-----------|-------------|------------|
-| M1 | Foundation | ABDM registration, sandbox, certs | — |
-| M2 | Patient ABHA Identity | Create / link / verify ABHA on patient profile | M1 |
-| M3 | Care Context & Linking | Attach clinical visits to patient's ABHA | M2 |
-| M4 | Consent Management | Request, store, revoke, and audit consent artefacts | M3 |
-| M5 | HIP — Record Push | Generate FHIR bundles and push to ABHA locker | M4 |
-| M6 | HIU — Record Fetch | Pull records from other facilities with consent | M4 |
-| M7 | Security Hardening | Encryption audit, penetration test, DPDP compliance | M5, M6 |
-| M8 | Production Go-Live | NHA approval, cert rotation, monitoring | M7 |
+| # | Milestone | Description | Depends On | Status |
+|---|-----------|-------------|------------|--------|
+| M1 | Foundation + ABHA Identity | ABDM sandbox, certs, Aadhaar enrollment, verification flows | — | ✅ Complete |
+| M2 | ABHA UI on Patient Profile | Angular ABHA section — create, verify, card download | M1 | 🔄 Next |
+| M3 | Care Context & Linking | Attach clinical visits to patient's ABHA | M2 | ⬜ Pending |
+| M4 | Consent Management | Request, store, revoke, and audit consent artefacts | M3 | ⬜ Pending |
+| M5 | HIP — Record Push | Generate FHIR bundles and push to ABHA locker | M4 | ⬜ Pending |
+| M6 | HIU — Record Fetch | Pull records from other facilities with consent | M4 | ⬜ Pending |
+| M7 | Security Hardening | Encryption audit, penetration test, DPDP compliance | M5, M6 | ⬜ Pending |
+| M8 | Production Go-Live | NHA approval, cert rotation, monitoring | M7 | ⬜ Pending |
 
 ---
 
-## M1 — Foundation & ABDM Registration
+## M1 — Foundation & ABHA Identity ✅ COMPLETE (2026-05-14)
 
-### Goals
+### What Was Delivered
+- ABDM sandbox credentials (`SBXID_035131`) configured and working
+- Redis installed for OTP session state and gateway token caching
+- `AbdmModule` with full V3 API alignment (REQUEST-ID header, V3 session endpoint, X-CM-ID)
+- `AbhaEncryptionService` — RSA/ECB/OAEPWithSHA-1AndMGF1Padding using live ABDM public cert
+- `AbhaSessionService` — HMAC-signed, Redis-backed OTP sessions with rate limiting
+- `AbhaIdentityService` — 2-step enrollment (initiate OTP → enroll), verification flow
+- Patient entity extended with ABHA columns (`abhaNumber`, `abhaAddress`, `abhaVerified`, etc.)
+- All M1 NHA test cases verified end-to-end in sandbox
+
+### Goals (original)
 - Register MedPilot as a Health Information Provider (HIP) with the NHA
 - Set up sandbox and production ABDM credentials
 - Establish certificate infrastructure
@@ -76,9 +86,49 @@ and optionally a **Health Information User (HIU)**. This means:
 
 ---
 
-## M2 — Patient ABHA Identity
+## M2 — ABHA UI on Patient Profile 🔄 IN PROGRESS
 
 ### Goals
+- Angular ABHA section on the patient profile page
+- Staff can initiate create/verify flows directly from the patient record
+- ABHA status badge, masked number display, and card download button
+
+### What's Already Done (from M1)
+- All backend API endpoints live and tested
+- Patient entity has ABHA columns
+
+### Remaining Work
+
+#### 2.1 Patient Profile — ABHA Section (Angular)
+- ABHA status card on patient profile: shows badge (Verified / Not Linked)
+- **Create ABHA flow**: modal → enter Aadhaar → OTP entry (60s countdown) → success
+- **Verify ABHA flow**: modal → enter ABHA number → OTP entry → links to patient record
+- **Download ABHA card**: button → downloads PNG inline
+- Masked ABHA number display: `XX-XXXX-XXXX-3500`
+- ABHA address display: `vinay@sbx`
+
+#### 2.2 Role Guards (UI)
+- Admin + Doctor: full access (create, verify, download card, unlink)
+- Receptionist: can initiate create/verify, cannot unlink
+
+#### 2.3 OTP Modal UX
+- 60-second countdown timer with auto-dismiss
+- Resend OTP button (appears after 30s)
+- 3-attempt limit with clear error message
+- Spinner + disabled submit during API call
+
+### Security Checklist
+- [ ] Aadhaar number is **never stored** — only last 4 digits for display
+- [ ] ABHA number encrypted at rest (AES-256, per-clinic key)
+- [ ] OTP flows have server-side rate limiting (max 3 attempts per 10 min)
+- [ ] txnId is single-use and has TTL
+- [ ] Audit log entry for every ABHA create/link/view action
+
+---
+
+## M2-old — Patient ABHA Identity (original plan, superseded)
+
+### Goals (original — now moved to M1 backend completion)
 - Let clinic staff create a new ABHA number for a patient
 - Let patients link an existing ABHA number to their profile
 - Store ABHA number securely on the patient record

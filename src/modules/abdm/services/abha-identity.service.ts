@@ -210,6 +210,7 @@ export class AbhaIdentityService {
     dto: InitiateVerifyDto,
     clinicId: string,
     initiatedBy: string,
+    patientId?: string | null,
   ): Promise<{ sessionToken: string; message: string }> {
     await this.session.checkRateLimit(`${clinicId}:${initiatedBy}:verify`);
 
@@ -231,7 +232,7 @@ export class AbhaIdentityService {
       txnId: res.txnId,
       step: AbhaFlowStep.OTP_SENT,
       flowType: AbhaFlowType.VERIFY_OTP,
-      patientId: null,
+      patientId: patientId ?? null,
       clinicId,
       initiatedBy,
       attempts: 0,
@@ -295,14 +296,24 @@ export class AbhaIdentityService {
       where: { abhaNumber, clinicId: s.clinicId } as any,
     });
 
-    // Store x-token for subsequent card download
     if (existing) {
+      // Update x-token for card download on returning patient
       await this.patientRepo
         .createQueryBuilder()
         .update(Patient)
         .set({ abhaXToken: res.token } as any)
         .where('id = :id', { id: existing.id })
         .execute();
+    } else if (s.patientId) {
+      // Link ABHA to the patient who initiated verification from their profile
+      await this.patientRepo.update(s.patientId, {
+        abhaNumber,
+        abhaAddress: account.preferredAbhaAddress ?? null,
+        abhaVerified: true,
+        abhaKycType: AbhaKycType.AADHAAR,
+        abhaLinkedAt: new Date(),
+        abhaXToken: res.token,
+      } as any);
     }
 
     await this.session.deleteSession(dto.sessionToken);
@@ -314,7 +325,7 @@ export class AbhaIdentityService {
       gender: '',  // not in accounts list; fetch /v3/profile/account if needed
       mobile: null,
       isNewPatient: !existing,
-      patientId: existing?.id ?? null,
+      patientId: existing?.id ?? s.patientId ?? null,
     };
   }
 
