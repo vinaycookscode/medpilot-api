@@ -31,8 +31,7 @@ export class InsuranceController {
   @Get('providers')
   @ApiOperation({ summary: 'List active insurance providers' })
   async findProviders(@CurrentUser() user: JwtPayload) {
-    const data = await this.insuranceService.findProviders(user.clinicId);
-    return { success: true, data };
+    return this.insuranceService.findProviders(user.clinicId);
   }
 
   @Post('providers')

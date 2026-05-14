@@ -33,7 +33,9 @@ async function seed() {
   const invoiceRepo     = dataSource.getRepository('invoices');
   const invoiceItemRepo = dataSource.getRepository('invoice_items');
   const paymentRepo     = dataSource.getRepository('payments');
-  const labCatalogRepo  = dataSource.getRepository('lab_test_catalog');
+  const labCatalogRepo      = dataSource.getRepository('lab_test_catalog');
+  const insuranceProvRepo   = dataSource.getRepository('insurance_providers');
+  const scheduleRepo        = dataSource.getRepository('doctor_schedules');
 
   // ── Clinic ──
   let clinic = await clinicRepo.findOne({ where: { slug: 'demo-clinic' } });
@@ -89,6 +91,56 @@ async function seed() {
     });
     console.log('✅ Created receptionist user');
   }
+
+  // ── Additional Doctors ──
+  const extraDoctors = [
+    { email: 'priya.sharma@democlinic.com',      firstName: 'Dr. Priya',    lastName: 'Sharma',       phone: '+91 98765 00010', specialization: 'Cardiologist',        qualification: 'MBBS, MD (Cardiology)', registrationNo: 'MH-22101', consultationFee: 800  },
+    { email: 'anita.mehta@democlinic.com',        firstName: 'Dr. Anita',    lastName: 'Mehta',        phone: '+91 98765 00011', specialization: 'Gynaecologist',       qualification: 'MBBS, MS (OBG)',        registrationNo: 'MH-33202', consultationFee: 700  },
+    { email: 'suresh.iyer@democlinic.com',        firstName: 'Dr. Suresh',   lastName: 'Iyer',         phone: '+91 98765 00012', specialization: 'Paediatrician',       qualification: 'MBBS, MD (Paediatrics)',registrationNo: 'MH-44303', consultationFee: 600  },
+    { email: 'ravi.krishna@democlinic.com',       firstName: 'Dr. Ravi',     lastName: 'Krishnamurthy',phone: '+91 98765 00013', specialization: 'Orthopaedic Surgeon', qualification: 'MBBS, MS (Ortho)',     registrationNo: 'MH-55404', consultationFee: 900  },
+    { email: 'neha.gupta@democlinic.com',         firstName: 'Dr. Neha',     lastName: 'Gupta',        phone: '+91 98765 00014', specialization: 'Dermatologist',       qualification: 'MBBS, MD (Derma)',     registrationNo: 'MH-66505', consultationFee: 750  },
+    { email: 'amit.desai@democlinic.com',         firstName: 'Dr. Amit',     lastName: 'Desai',        phone: '+91 98765 00015', specialization: 'Neurologist',         qualification: 'MBBS, DM (Neurology)', registrationNo: 'MH-77606', consultationFee: 1000 },
+  ];
+  let newDoctorCount = 0;
+  for (const doc of extraDoctors) {
+    const exists = await userRepo.findOne({ where: { email: doc.email } });
+    if (!exists) {
+      await userRepo.save({ ...doc, clinicId: clinic.id, passwordHash: hash, role: 'doctor', isActive: true });
+      newDoctorCount++;
+    }
+  }
+  if (newDoctorCount > 0) console.log(`✅ Seeded ${newDoctorCount} additional doctors`);
+
+  // ── Additional Receptionists & Nurses ──
+  const extraStaff = [
+    { email: 'meera.nair@democlinic.com',   firstName: 'Meera',   lastName: 'Nair',   phone: '+91 98765 00020', role: 'receptionist' },
+    { email: 'kavitha.rao@democlinic.com',  firstName: 'Kavitha', lastName: 'Rao',    phone: '+91 98765 00021', role: 'receptionist' },
+  ];
+  let newStaffCount = 0;
+  for (const s of extraStaff) {
+    const exists = await userRepo.findOne({ where: { email: s.email } });
+    if (!exists) {
+      await userRepo.save({ ...s, clinicId: clinic.id, passwordHash: hash, isActive: true });
+      newStaffCount++;
+    }
+  }
+  if (newStaffCount > 0) console.log(`✅ Seeded ${newStaffCount} additional staff`);
+
+  // ── Doctor Schedules (Mon–Sat, 09:00–17:00, 20-min slots) ──
+  const allDoctors = await userRepo.find({ where: { clinicId: clinic.id, role: 'doctor' } });
+  const weekdays = ['monday','tuesday','wednesday','thursday','friday','saturday'];
+  let scheduleCount = 0;
+  for (const doc of allDoctors) {
+    for (const day of weekdays) {
+      const exists = await scheduleRepo.findOne({ where: { doctorId: doc.id, clinicId: clinic.id, dayOfWeek: day } });
+      if (!exists) {
+        await scheduleRepo.save({ doctorId: doc.id, clinicId: clinic.id, dayOfWeek: day, startTime: '09:00', endTime: '17:00', slotDuration: 20, maxPatients: 24, isActive: true });
+        scheduleCount++;
+      }
+    }
+  }
+  if (scheduleCount > 0) console.log(`✅ Seeded ${scheduleCount} doctor schedule slots`);
+  else console.log(`ℹ️  Doctor schedules already exist, skipping`);
 
   // ── Medicines ──
   const medicineCount = await medicineRepo.count({ where: { clinicId: null } });
@@ -584,6 +636,25 @@ async function seed() {
     console.log(`ℹ️  Enough invoices exist (${invoiceCount}), skipping`);
   }
 
+  // ── Insurance Providers ──
+  const insuranceProvCount = await insuranceProvRepo.count({ where: { clinicId: clinic.id } });
+  if (insuranceProvCount === 0) {
+    const providers = [
+      { name: 'Star Health Insurance',        code: 'STAR',    contactEmail: 'claims@starhealth.in',     contactPhone: '1800-425-2255', isActive: true },
+      { name: 'HDFC ERGO Health Insurance',   code: 'HDFC',    contactEmail: 'claims@hdfcergo.com',      contactPhone: '1800-2700-700', isActive: true },
+      { name: 'Niva Bupa Health Insurance',   code: 'NIVA',    contactEmail: 'claims@nivabupa.com',      contactPhone: '1800-200-7878', isActive: true },
+      { name: 'Care Health Insurance',        code: 'CARE',    contactEmail: 'claims@careinsurance.com', contactPhone: '1800-102-4488', isActive: true },
+      { name: 'Bajaj Allianz Health',         code: 'BAJAJ',   contactEmail: 'claims@bajajallianz.co.in',contactPhone: '1800-209-0144', isActive: true },
+      { name: 'New India Assurance',          code: 'NIA',     contactEmail: 'ho@newindia.co.in',        contactPhone: '1800-209-1415', isActive: true },
+      { name: 'United India Insurance',       code: 'UII',     contactEmail: 'claims@uiic.co.in',        contactPhone: '1800-425-3844', isActive: true },
+      { name: 'ManipalCigna Health',          code: 'CIGNA',   contactEmail: 'care@manipalcigna.com',    contactPhone: '1800-102-4462', isActive: true },
+    ];
+    await insuranceProvRepo.save(providers.map(p => ({ ...p, clinicId: clinic.id })));
+    console.log(`✅ Seeded ${providers.length} insurance providers`);
+  } else {
+    console.log(`ℹ️  Insurance providers already seeded (${insuranceProvCount}), skipping`);
+  }
+
   // ── Lab Test Catalog ──
   const labCatalogCount = await labCatalogRepo.count({ where: { clinicId: clinic.id } });
   if (labCatalogCount === 0) {
@@ -622,6 +693,78 @@ async function seed() {
     console.log(`✅ Seeded ${labTests.length} lab catalog tests`);
   } else {
     console.log(`ℹ️  Lab catalog already seeded (${labCatalogCount} tests), skipping`);
+  }
+
+  // ── Today's Appointments (always delete + reseed for clean demo data) ──
+  const apptRepo  = dataSource.getRepository('appointments');
+  const todayDate = daysFromNow(0);
+  await dataSource.query(
+    `DELETE FROM appointments WHERE "clinicId" = $1 AND "appointmentDate" = $2`,
+    [clinic.id, todayDate],
+  );
+  {
+    const allPatientsForAppt = await patientRepo.find({ where: { clinicId: clinic.id } });
+    const allDoctorsForAppt  = await userRepo.find({ where: { clinicId: clinic.id, role: 'doctor' } });
+
+    const pByName  = (fn: string, ln: string) => allPatientsForAppt.find(p => p.firstName === fn && p.lastName === ln);
+    const dByEmail = (email: string)          => allDoctorsForAppt.find(d => d.email === email);
+
+    const addMins = (t: string, m: number) => {
+      const [h, min] = t.split(':').map(Number);
+      const total = h * 60 + min + m;
+      return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+    };
+
+    const apptDefs = [
+      // ── Dr. Rajesh Kumar · General Physician ──
+      { patient: pByName('Arjun',  'Sharma'), doctor: dByEmail('doctor@democlinic.com'),       start: '09:00', status: 'completed',   type: 'follow_up',   token: 1, complaint: 'BP review and routine check' },
+      { patient: pByName('Priya',  'Patel'),  doctor: dByEmail('doctor@democlinic.com'),       start: '09:20', status: 'completed',   type: 'follow_up',   token: 2, complaint: 'Anaemia follow-up' },
+      { patient: pByName('Ravi',   'Mehta'),  doctor: dByEmail('doctor@democlinic.com'),       start: '09:40', status: 'in_progress', type: 'follow_up',   token: 3, complaint: 'Diabetes management review' },
+      { patient: pByName('Sunita', 'Desai'),  doctor: dByEmail('doctor@democlinic.com'),       start: '10:00', status: 'confirmed',  type: 'new_patient', token: 4, complaint: 'Fever and body ache for 2 days' },
+      // ── Dr. Priya Sharma · Cardiologist ──
+      { patient: pByName('Arjun',  'Sharma'), doctor: dByEmail('priya.sharma@democlinic.com'), start: '09:00', status: 'completed',   type: 'follow_up',   token: 1, complaint: 'Hypertension review, ECG check' },
+      { patient: pByName('Deepak', 'Verma'),  doctor: dByEmail('priya.sharma@democlinic.com'), start: '09:20', status: 'in_progress', type: 'follow_up',   token: 2, complaint: 'Chest tightness on exertion' },
+      { patient: pByName('Kavitha','Nair'),   doctor: dByEmail('priya.sharma@democlinic.com'), start: '10:00', status: 'scheduled',   type: 'new_patient', token: 3, complaint: 'Palpitations and breathlessness' },
+      // ── Dr. Anita Mehta · Gynaecologist ──
+      { patient: pByName('Meena',  'Singh'),  doctor: dByEmail('anita.mehta@democlinic.com'),  start: '09:00', status: 'completed',   type: 'new_patient', token: 1, complaint: 'Irregular menstrual cycle, PCOS evaluation' },
+      { patient: pByName('Priya',  'Patel'),  doctor: dByEmail('anita.mehta@democlinic.com'),  start: '09:40', status: 'confirmed',  type: 'follow_up',   token: 2, complaint: 'PCOS routine review' },
+      { patient: pByName('Sunita', 'Desai'),  doctor: dByEmail('anita.mehta@democlinic.com'),  start: '10:20', status: 'scheduled',   type: 'routine',     token: 3, complaint: 'Routine gynaecology check-up' },
+      // ── Dr. Suresh Iyer · Paediatrician ──
+      { patient: pByName('Kavitha','Nair'),   doctor: dByEmail('suresh.iyer@democlinic.com'),  start: '09:00', status: 'completed',   type: 'new_patient', token: 1, complaint: 'Child — fever and persistent cough' },
+      { patient: pByName('Meena',  'Singh'),  doctor: dByEmail('suresh.iyer@democlinic.com'),  start: '09:20', status: 'scheduled',   type: 'follow_up',   token: 2, complaint: 'Growth and development review' },
+      // ── Dr. Ravi Krishnamurthy · Orthopaedic ──
+      { patient: pByName('Amit',   'Joshi'),  doctor: dByEmail('ravi.krishna@democlinic.com'), start: '09:00', status: 'in_progress', type: 'new_patient', token: 1, complaint: 'Right knee pain since 1 month' },
+      { patient: pByName('Ravi',   'Mehta'),  doctor: dByEmail('ravi.krishna@democlinic.com'), start: '09:40', status: 'scheduled',   type: 'follow_up',   token: 2, complaint: 'Post-fracture follow-up, X-ray review' },
+      { patient: pByName('Deepak', 'Verma'),  doctor: dByEmail('ravi.krishna@democlinic.com'), start: '10:20', status: 'scheduled',   type: 'emergency',   token: 3, complaint: 'Acute ankle sprain from fall' },
+      // ── Dr. Neha Gupta · Dermatologist ──
+      { patient: pByName('Sunita', 'Desai'),  doctor: dByEmail('neha.gupta@democlinic.com'),   start: '09:00', status: 'completed',   type: 'new_patient', token: 1, complaint: 'Acne and facial skin rash' },
+      { patient: pByName('Meena',  'Singh'),  doctor: dByEmail('neha.gupta@democlinic.com'),   start: '09:20', status: 'completed',   type: 'follow_up',   token: 2, complaint: 'Eczema follow-up, patch test results' },
+      { patient: pByName('Priya',  'Patel'),  doctor: dByEmail('neha.gupta@democlinic.com'),   start: '09:40', status: 'scheduled',   type: 'routine',     token: 3, complaint: 'Hair fall and scalp treatment' },
+      // ── Dr. Amit Desai · Neurologist ──
+      { patient: pByName('Deepak', 'Verma'),  doctor: dByEmail('amit.desai@democlinic.com'),   start: '10:00', status: 'confirmed',   type: 'follow_up',   token: 1, complaint: 'Migraine review and peripheral neuropathy' },
+      { patient: pByName('Kavitha','Nair'),   doctor: dByEmail('amit.desai@democlinic.com'),   start: '10:40', status: 'scheduled',   type: 'new_patient', token: 2, complaint: 'Persistent headaches and dizziness' },
+    ];
+
+    let apptSeededCount = 0;
+    for (const def of apptDefs) {
+      if (!def.patient || !def.doctor) continue;
+      await apptRepo.save({
+        id: uuidv4(),
+        clinicId: clinic.id,
+        patientId: def.patient.id,
+        doctorId: def.doctor.id,
+        appointmentDate: todayDate,
+        startTime: def.start,
+        endTime: addMins(def.start, 20),
+        durationMinutes: 20,
+        status: def.status,
+        appointmentType: def.type,
+        chiefComplaint: def.complaint,
+        tokenNumber: def.token,
+      });
+      apptSeededCount++;
+    }
+    console.log(`✅ Seeded ${apptSeededCount} today's appointments`);
   }
 
   console.log('\n🚀 Seed complete!');

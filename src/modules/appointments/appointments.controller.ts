@@ -36,9 +36,23 @@ export class AppointmentsController {
   }
 
   @Get('today')
-  @ApiOperation({ summary: "Today's appointment queue" })
-  today(@CurrentUser() user: JwtPayload) {
-    return this.appointmentsService.findToday(user.clinicId, user);
+  @ApiOperation({ summary: 'Today\'s appointments' })
+  @ApiQuery({ name: 'date', required: false, example: '2024-11-15' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  today(
+    @CurrentUser() user: JwtPayload,
+    @Query('date') date?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.appointmentsService.findToday(
+      user.clinicId,
+      user,
+      date,
+      page ? +page : 1,
+      limit ? +limit : 20,
+    );
   }
 
   @Get('calendar')
@@ -52,7 +66,7 @@ export class AppointmentsController {
     @Query('endDate') endDate: string,
     @Query('doctorId') doctorId?: string,
   ) {
-    return this.appointmentsService.findCalendar(user.clinicId, startDate, endDate, doctorId);
+    return this.appointmentsService.findCalendar(user.clinicId, startDate, endDate, user, doctorId);
   }
 
   @Get(':id')

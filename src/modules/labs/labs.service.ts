@@ -12,6 +12,8 @@ import { CreateLabOrderDto } from './dto/create-lab-order.dto';
 import { UpdateLabResultDto } from './dto/update-lab-result.dto';
 import { QueryLabsDto } from './dto/query-labs.dto';
 import { CreateTestCatalogDto } from './dto/create-test-catalog.dto';
+import { UserRole } from '../users/enums/user-role.enum';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 @Injectable()
 export class LabsService {
@@ -50,7 +52,7 @@ export class LabsService {
     return this.findOrderById(savedOrder.id, clinicId);
   }
 
-  async findOrders(clinicId: string, query: QueryLabsDto) {
+  async findOrders(clinicId: string, query: QueryLabsDto, currentUser: JwtPayload) {
     const qb = this.ordersRepo
       .createQueryBuilder('o')
       .leftJoinAndSelect('o.patient', 'patient')
@@ -59,6 +61,10 @@ export class LabsService {
       .leftJoinAndSelect('items.test', 'test')
       .where('o.clinicId = :clinicId', { clinicId })
       .andWhere('o.deletedAt IS NULL');
+
+    if (currentUser.role === UserRole.DOCTOR) {
+      qb.andWhere('o.orderedById = :orderedById', { orderedById: currentUser.sub });
+    }
 
     if (query.patientId) {
       qb.andWhere('o.patientId = :patientId', { patientId: query.patientId });
